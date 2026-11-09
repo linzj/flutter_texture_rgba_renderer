@@ -131,6 +131,23 @@ import CoreVideo
         }
     }
 
+    /// Shows a decoded frame without copying it. Flutter's macOS external
+    /// texture samples 32BGRA and bi-planar 4:2:0 (NV12) buffers directly, so
+    /// a VideoToolbox output buffer can be handed over as is. The buffer must
+    /// not be written to afterwards. It is retained until the next frame.
+    @discardableResult
+    @objc public func markFrameAvaliable(pixelBuffer: CVPixelBuffer) -> Bool {
+        // width/height describe the RGBA pool, which ensurePool reuses when
+        // they match, so a frame that bypasses the pool must not change them.
+        queue.sync {
+            self.data = pixelBuffer
+        }
+        if textureId != -1 {
+            registry?.textureFrameAvailable(textureId)
+            return true
+        }
+        return false
+    }
 
     @objc public func markFrameAvaliable(data: Data, width: Int, height: Int, stride_align: Int) -> Bool {
         data.withUnsafeBytes { buffer in

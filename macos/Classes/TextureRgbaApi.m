@@ -6,6 +6,7 @@
 //
 
 #import <Foundation/Foundation.h>
+#import <CoreVideo/CoreVideo.h>
 #import "texture_rgba_renderer/texture_rgba_renderer-Swift.h"
 
 #if __cplusplus
@@ -34,6 +35,22 @@ uint64_t FlutterRgbaRendererPluginGetConsumed(void* texture_rgba_ptr) {
             return 0;
         }
         return [texture_rgba getConsumed];
+    }
+}
+
+/// Shows `pixel_buffer` (32BGRA or bi-planar 4:2:0) without copying it. The
+/// texture retains it, so the caller keeps its own reference. The pointer is
+/// resolved through the registry, as in FlutterRgbaRendererPluginOnRgba.
+void FlutterRgbaRendererPluginOnCVPixelBuffer(void* texture_rgba_ptr, CVPixelBufferRef pixel_buffer) {
+    if (pixel_buffer == NULL) {
+        return;
+    }
+    @autoreleasepool {
+        TextRgba* texture_rgba = [TextureRgbaRegistry get:(NSUInteger)texture_rgba_ptr];
+        if (texture_rgba == nil) {
+            return;
+        }
+        [texture_rgba markFrameAvaliableWithPixelBuffer:pixel_buffer];
     }
 }
 
